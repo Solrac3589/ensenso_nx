@@ -20,6 +20,7 @@
 
 
 
+
 namespace ensenso_nx
 {
 
@@ -79,10 +80,13 @@ protected:
 	std::string serial_number__;
 
 	std::shared_ptr<actionlib::SimpleActionServer<sensor_msgs::AdvancedSnapshotCloudAction> > snapshot_action__;
-	std::shared_ptr<actionlib::SimpleActionServer<ensenso_nx::HECalibrationAction> > handseye_calibration_action__;
+	std::shared_ptr<actionlib::SimpleActionServer<ensenso_camera_msgs::CalibrateHandEyeAction> > handseye_calibration_action__;
 
 	void advancedSnapshotCallback(const sensor_msgs::AdvancedSnapshotCloudGoalConstPtr &__goal );
 	void HandsEyeCalibrationCallback(const ensenso_nx::HECalibrationGoalConstPtr &__goal);
+	void HandEyeCalibrationCb(const ensenso_camera_msgs::CalibrateHandEyeGoalConstPtr &__goal);
+
+	void HandsEyeCalibration(const ensenso_camera_msgs::CalibrateHandEyeGoalConstPtr &__goal, const ensenso_camera_msgs::CalibrateHandEyeResultConstPtr &__result);
 };
 
 }

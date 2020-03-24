@@ -49,6 +49,12 @@ EnsensoNxNode::EnsensoNxNode():
 	if( !nh__.getParam("cal_grid_spacing", he_cal_params__.grid_spacing) )
 		ROS_WARN_NAMED("EnensoNxNode", "Grid spacing for Hands eye not found. If decode data iss set to false the hands eye calibration will not work!");
 
+	if( !nh__.getParam("robot_frame", camera__->robotFrame__) )
+		ROS_WARN_NAMED("EnensoNxNode", "Robot frame param not found. This will disable the capability to do a hand eye calibration!");
+
+	if( !nh__.getParam("wrist_frame", camera__->wristFrame__) )
+		ROS_WARN_NAMED("EnensoNxNode", "Wrist frame param not found. This will disable the capability to do a hand eye calibration!");
+
 	is_params_loaded__ = true;
 
 	set_camera_service__ = nh__.advertiseService("set_camera", &EnsensoNxNode::setCameraEnable, this);
@@ -65,7 +71,7 @@ EnsensoNxNode::EnsensoNxNode():
 	snapshot_action__.reset(new actionlib::SimpleActionServer<sensor_msgs::AdvancedSnapshotCloudAction>(ros::NodeHandle(), ros::this_node::getName() + "/advanced_snapshot/", boost::bind(&EnsensoNxNode::advancedSnapshotCallback, this, _1), false));
 	snapshot_action__->start();
 
-	handseye_calibration_action__.reset(new actionlib::SimpleActionServer<ensenso_nx::HECalibrationAction>(ros::NodeHandle(), ros::this_node::getName() + "/handseye_calibration/", boost::bind(&EnsensoNxNode::HandsEyeCalibrationCallback, this, _1), false));
+	handseye_calibration_action__.reset(new actionlib::SimpleActionServer<ensenso_camera_msgs::CalibrateHandEyeAction>(ros::NodeHandle(), ros::this_node::getName() + "/handseye_calibration/", boost::bind(&EnsensoNxNode::HandEyeCalibrationCb, this, _1), false));
 	handseye_calibration_action__->start();
 
 	std::cout << "ROS EnsensoNxNode Settings: " << std::endl;
@@ -405,7 +411,7 @@ void EnsensoNxNode::advancedSnapshotCallback(const sensor_msgs::AdvancedSnapshot
 	return;
 
 }
-
+/*
 void EnsensoNxNode::HandsEyeCalibrationCallback(const ensenso_nx::HECalibrationGoalConstPtr &__goal)
 {
 
@@ -413,7 +419,51 @@ void EnsensoNxNode::HandsEyeCalibrationCallback(const ensenso_nx::HECalibrationG
 
 	camera__->HandsEyeCalibration(__goal,res);
 
+	handseye_calibration_action__->setSucceeded(*res);
 
+}
+*/
+void EnsensoNxNode::HandEyeCalibrationCb(const ensenso_camera_msgs::CalibrateHandEyeGoalConstPtr &__goal)
+{
+
+	ensenso_camera_msgs::CalibrateHandEyeResultPtr res;
+	ros::Duration loop_time(0.5);
+
+	camera__->setCalibrationActive();
+	camera__->HandsEyeCalibrationDetached(__goal,res);
+
+	while (camera__->isCalibrationActive())
+	{
+		if (handseye_calibration_action__->isPreemptRequested())
+			camera__->callCalibrationPreempt();
+
+		if (camera__->requestFeedbackSend())
+		{
+			handseye_calibration_action__->publishFeedback(camera__->feedbackData());
+			camera__->setFeedback(false);
+		}
+
+		loop_time.sleep();
+	}
+
+	bool calibration_result = camera__->getCalibrationResult();
+	if(calibration_result == 0)
+	{
+		camera__->resetCalibration();
+		handseye_calibration_action__->setSucceeded(*res);
+	}
+	else if(calibration_result == 1)
+	{
+		camera__->resetCalibration();
+		handseye_calibration_action__->setPreempted(*res);
+	}
+	else
+	{
+		camera__->resetCalibration();
+		handseye_calibration_action__->setAborted(*res);
+	}
+
+	return;
 
 }
 

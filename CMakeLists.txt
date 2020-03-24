@@ -16,26 +16,29 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++11 support.")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++11 support.")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++0x support.")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+	message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has C++0x support.")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+	message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 find_package(
-    catkin REQUIRED
-    COMPONENTS
-        roscpp
-        rospy
-        dynamic_reconfigure
-        std_msgs
-        sensor_msgs
-        pcl_ros
-        pcl_conversions
-	actionlib_msgs
+	catkin REQUIRED
+	COMPONENTS
+		roscpp
+		rospy
+		dynamic_reconfigure
+		std_msgs
+		sensor_msgs
+		ensenso_camera_msgs
+		motion_server
+		message_generation
+		pcl_ros
+		pcl_conversions
+		actionlib_msgs
 )
 
 find_package(PCL 1.3 REQUIRED COMPONENTS)
@@ -60,40 +63,59 @@ generate_dynamic_reconfigure_options(cfg/EnsensoNxParams.cfg)
 
 
 add_action_files(
-  DIRECTORY action
-  FILES
-  HECalibration.action
+	FILES
+	HECalibration.action
+#	CalibrateHandEye.action
 )
 
+#add_message_files(
+#	DIRECTORY msg
+#	FILES
+#	StereoCalibrationPattern.msg
+#	NxLibException.msg
+#	ImagePoint.msg
+#)
+
 generate_messages(
-  DEPENDENCIES actionlib_msgs std_msgs geometry_msgs
+  DEPENDENCIES actionlib_msgs std_msgs geometry_msgs motion_server
 )
 
 
 catkin_package(
+	INCLUDE_DIRS include
+	LIBRARIES ${PROJECT_NAME}_lib
 	CATKIN_DEPENDS
 	roscpp
-        tf2
-        tf2_ros
+	tf2
+	tf2_ros
 	rospy
 	dynamic_reconfigure
 	std_msgs
+	motion_server
 	sensor_msgs
+	ensenso_camera_msgs
+	message_runtime
 	pcl_ros
 	pcl_conversions
 	actionlib_msgs
 )
 
 
-
-
 add_library(${PROJECT_NAME}_lib SHARED
 	src/${PROJECT_NAME}/ensenso_nx.cpp
+	src/${PROJECT_NAME}/calibration_pattern.cpp
+	src/${PROJECT_NAME}/conversion.cpp
 )
 target_link_libraries(${PROJECT_NAME}_lib
 	${ENSENSO_LIBRARIES}
 	${PCL_COMMON_LIBRARIES}
 	${PCL_IO_LIBRARIES}
+)
+add_dependencies(${PROJECT_NAME}_lib
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${PROJECT_NAME}_gencfg
+	${catkin_EXPORTED_TARGETS}
+	${PROJECT_NAME}_generate_messages_cpp
 )
 
 add_library(${PROJECT_NAME}_node SHARED
@@ -104,7 +126,7 @@ add_dependencies(${PROJECT_NAME}_node
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${PROJECT_NAME}_gencfg
 	${catkin_EXPORTED_TARGETS}
-        ${PROJECT_NAME}_generate_messages_cpp
+	${PROJECT_NAME}_generate_messages_cpp
 )
 target_link_libraries(${PROJECT_NAME}_node
 	${PROJECT_NAME}_lib
@@ -115,8 +137,9 @@ add_executable(${PROJECT_NAME}
 	src/ensenso_nx_node_main.cpp
 )
 add_dependencies(${PROJECT_NAME}
+	${catkin_EXPORTED_TARGETS}
 	${PROJECT_NAME}_lib
-        ${PROJECT_NAME}_generate_messages_cpp
+	${PROJECT_NAME}_generate_messages_cpp
 )
 target_link_libraries(${PROJECT_NAME}
 	${PROJECT_NAME}_node

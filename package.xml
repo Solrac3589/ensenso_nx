@@ -23,7 +23,9 @@
     <build_depend>std_msgs</build_depend>
     <build_depend>tf2</build_depend>
     <build_depend>tf2_ros</build_depend>
-    <build_depend>sensor_msgs</build_depend>
+	<build_depend>motion_server</build_depend>
+	<build_depend>sensor_msgs</build_depend>
+	<build_depend>ensenso_camera_msgs</build_depend>
     <build_depend>pcl_ros</build_depend>
     <build_depend>pcl_conversions</build_depend>
     <build_depend>actionlib_msgs</build_depend>
@@ -35,7 +37,9 @@
     <run_depend>std_msgs</run_depend>
     <run_depend>tf2</run_depend>
     <run_depend>tf2_ros</run_depend>
-    <run_depend>sensor_msgs</run_depend>
+	<run_depend>motion_server</run_depend>
+	<run_depend>sensor_msgs</run_depend>
+	<run_depend>ensenso_camera_msgs</run_depend>
     <run_depend>pcl_ros</run_depend>
     <run_depend>pcl_conversions</run_depend>
     <run_depend>actionlib_msgs</run_depend>
