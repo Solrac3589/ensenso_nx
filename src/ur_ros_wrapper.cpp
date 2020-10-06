@@ -239,6 +239,8 @@ private:
 			std::vector<std::vector<double> > positions,
 			std::vector<std::vector<double> > velocities) {
 
+		std::vector<double> pos;
+		pos = robot_.rt_interface_->robot_state_->getQActual();
 		robot_.doTraj(timestamps, positions, velocities);
 		if (has_goal_) {
 			result_.error_code = result_.SUCCESSFUL;

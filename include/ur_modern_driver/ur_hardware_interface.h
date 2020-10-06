@@ -101,6 +101,9 @@ public:
 			const std::list<hardware_interface::ControllerInfo> &stop_list) const;
 	void doSwitch(const std::list<hardware_interface::ControllerInfo>&start_list,
 			const std::list<hardware_interface::ControllerInfo>&stop_list);
+	/****/
+	std::vector<double> joint_position_;
+	/****/
 
 protected:
 
@@ -116,7 +119,6 @@ protected:
 	bool position_interface_running_;
 	// Shared memory
 	std::vector<std::string> joint_names_;
-	std::vector<double> joint_position_;
 	std::vector<double> joint_velocity_;
 	std::vector<double> joint_effort_;
 	std::vector<double> joint_position_command_;
